@@ -1,0 +1,16 @@
+{
+  "name": "Hazel's Rescue Climb",
+  "short_name": "Hazel's Climb",
+  "description": "A gentle climbing game where Hazel rescues stuffed animals across three magical worlds.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#f2e7ff",
+  "theme_color": "#f2e7ff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
