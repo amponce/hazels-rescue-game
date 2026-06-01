@@ -302,8 +302,8 @@ const keys={};
 // Difficulty presets seed the global skill multipliers (physics already reads these).
 // Letter-game upgrades stack on top of whichever baseline you start from.
 const DIFFICULTY={
-  toddler:{jump:1.6, dash:1.5,  magnet:2.2},
-  kid:    {jump:1.3, dash:1.2,  magnet:1.6},
+  toddler:{jump:1.3, dash:1.4,  magnet:2.2},
+  kid:    {jump:1.15,dash:1.15, magnet:1.6},
   grown:  {jump:1,   dash:1,    magnet:1}
 };
 let difficulty='toddler';
@@ -507,7 +507,6 @@ function endBonus(){bonus=null;state='play';}
 
 // ---------------- Physics ----------------
 function aabb(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
-function solidsAll(){return level.platforms.concat(movers).concat([level.ground]);}
 
 function physics(dt){
   // movers
@@ -565,16 +564,22 @@ function physics(dt){
     if(p.power==='balloon'&&!p.onGround&&p.vy>BALLOON_FALL)p.vy=BALLOON_FALL;
   }
 
-  // integrate X
+  // integrate X — platforms are one-way (you pass through their sides and underside),
+  // so only the level edges limit horizontal motion. Removes edge-catching while climbing.
   p.x+=p.vx*dt;p.standingOn=null;
-  for(const s of solidsAll()){if(aabb(p,s)){if(p.vx>0)p.x=s.x-p.w;else if(p.vx<0)p.x=s.x+s.w;p.vx=0;if(p.dashT>0)p.dashT=0;}}
   if(p.x<0)p.x=0;if(p.x+p.w>level.width)p.x=level.width-p.w;
 
-  // integrate Y
+  // integrate Y — one-way platforms: rising passes through everything (no head-bonk),
+  // landing only catches the top edge when descending.
+  const prevFoot=p.y+p.h;                 // foot height before moving this step
   p.y+=p.vy*dt;const wasAir=!p.onGround;let grounded=false;
-  for(const s of solidsAll()){if(aabb(p,s)){
-    if(p.vy>0){p.y=s.y-p.h;grounded=true;p.standingOn=s;}
-    else if(p.vy<0){p.y=s.y+s.h;}p.vy=0;}}
+  if(p.vy>=0){
+    if(aabb(p,level.ground)){p.y=level.ground.y-p.h;grounded=true;p.standingOn=level.ground;} // ground always solid from top
+    else for(const s of level.platforms.concat(movers)){ // floating platforms catch only when crossing the top edge
+      if(aabb(p,s)&&prevFoot<=s.y+2){p.y=s.y-p.h;grounded=true;p.standingOn=s;break;}
+    }
+    if(grounded)p.vy=0;
+  }
   if(wasAir&&grounded){const fell=Math.min(1,Math.abs(p.landImpact)/700);
     p.squash=0.5+fell*0.8;p.jumps=2;
     if(fell>0.3){sfx.land();puff(p.x+p.w/2,p.y+p.h,'#ffd9ec',3+fell*7,60+fell*100,260);}}
